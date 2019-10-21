@@ -1,8 +1,5 @@
 import os
-
-from app import createApp
-from config.development import Development
-
+from flask_app import createApp
 
 if os.environ['FLASK_ENV_TYPE'] == 'Development':
     from config.development import Development as Config
@@ -17,4 +14,5 @@ app = createApp(Config)
 
 @app.route('/')
 def hello():
-   return 'Heeey'
+
+    return 'Heeey'
