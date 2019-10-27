@@ -10,7 +10,7 @@ from flask_app.measurement.models import Measurement
 from flask_app.measurement import measurement_blueprint
 
 
-def createApp(config):
+def createApp(config):  # main()
 
     app = Flask(__name__)
     app.config.from_object(config)

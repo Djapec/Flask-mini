@@ -1,30 +1,47 @@
 from flask import request
 from flask_restplus import Resource
+from marshmallow import ValidationError
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
 from flask_app import db
 from flask_app.measurement import measurements_api
 from flask_app.measurement.models import Measurement
 from sqlalchemy.exc import SQLAlchemyError
+from flask_app.measurement.schemas import MeasurementGet, MeasurementPost
 
+# dek
+# table +
+# status codes
+
+
+Measurement_get = MeasurementGet()
+Measurement_post = MeasurementPost()
+
+# blueprint level error handler flask
 
 @measurements_api.route('/')
 @measurements_api.route('/<int:measurement_id>')
 class MeasurementApi(Resource):
     def post(self):
         try:
-            data = request.get_json(force=True)
-
+            measurement_dict = Measurement_post.load(request.get_json(force=True))
             measurement = Measurement(
-                temperature=data['temperature'],
-                air_quality=data['air_quality'],
-                humidity=data['humidity'])
+                temperature=measurement_dict['temperature'],
+                air_quality=measurement_dict['air_quality'],
+                humidity=measurement_dict['humidity'])
+
 
             db.session.add(measurement)
             db.session.commit()
+
         except SQLAlchemyError as sqlalchemy_error:
             print(f"SqlAlchemy error:: {sqlalchemy_error}")
             return {'message': 'Database error.'}, 500
+
+        except ValidationError as validationError:
+            print(f"Validation error:: {validationError}")
+            return {'message': F'Validation error :D{validationError}'}, 500
+
         except Exception as error:
             print(f"Unknown error:: {error}")
             return {'message': 'Unknown error.'}, 500
@@ -33,6 +50,7 @@ class MeasurementApi(Resource):
 
     def get(self, measurement_id):
         try:
+
             measurement = db.session. \
                 query(Measurement). \
                 filter(Measurement.id == measurement_id). \
@@ -55,8 +73,6 @@ class MeasurementApi(Resource):
 
         response_data = {'temperature': measurement.temperature,
                          'air_quality': measurement.air_quality,
-                         'humiidity': measurement.humidity,
-                         'created_at': measurement.created_datetime}
+                         'humidity': measurement.humidity}
 
-        return response_data, 200
-
+        return Measurement_get.dump(response_data), 200
