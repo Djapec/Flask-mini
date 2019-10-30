@@ -1,3 +1,6 @@
+import math
+from datetime import datetime
+
 from flask import request
 from flask_restplus import Resource
 from marshmallow import ValidationError
@@ -13,9 +16,10 @@ from flask_app.measurement.schemas import MeasurementGet, MeasurementPost
 # table +
 # status codes
 
-
+                             
 Measurement_get = MeasurementGet()
 Measurement_post = MeasurementPost()
+
 
 # blueprint level error handler flask
 
@@ -29,7 +33,6 @@ class MeasurementApi(Resource):
                 temperature=measurement_dict['temperature'],
                 air_quality=measurement_dict['air_quality'],
                 humidity=measurement_dict['humidity'])
-
 
             db.session.add(measurement)
             db.session.commit()
@@ -76,3 +79,43 @@ class MeasurementApi(Resource):
                          'humidity': measurement.humidity}
 
         return Measurement_get.dump(response_data), 200
+
+
+@measurements_api.route('/history/<int:start>/<int:end>/<int:limit>')
+class MeasurementApi2(Resource):
+    def get(self, start, end, limit):
+
+        # if type(limit) is str:
+        #     print("True")
+        # else:
+        #     print("no")
+
+        start_date = datetime.fromtimestamp(start / 1000)
+        end_date = datetime.fromtimestamp(end / 1000)
+        limit_date = limit
+
+        measurement_history = db.session. \
+            query(Measurement). \
+            filter(Measurement.created_datetime >= start_date, Measurement.created_datetime <= end_date)
+
+        list_pom = []
+
+        len = measurement_history.count()
+
+        if limit_date != 0:
+            step = math.ceil(len / limit_date)
+        else:
+            step = 1
+
+        for i in range(0, len, step):
+            list_pom.append(Measurement_get.dump(measurement_history[i]))
+
+        return {"Measurements": list_pom}, 200
+
+
+@measurements_api.route('/latest')
+class MeasurementApi3(Resource):
+    def get(self):
+        measurement_latest = db.session.query(Measurement).order_by(Measurement.id.desc()).first()
+
+        return Measurement_get.dump(measurement_latest)
