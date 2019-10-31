@@ -1,5 +1,6 @@
 import os
 from flask_app import createApp
+from flask_app import db
 
 os.environ['FLASK_ENV_TYPE'] = 'Development'
 
@@ -16,5 +17,5 @@ app = createApp(Config)
 
 @app.route('/')
 def hello():
-
+    db.create_all()
     return 'Heeey'
