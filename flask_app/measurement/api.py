@@ -16,7 +16,7 @@ from flask_app.measurement.schemas import MeasurementGet, MeasurementPost
 # table +
 # status codes
 
-                             
+
 Measurement_get = MeasurementGet()
 Measurement_post = MeasurementPost()
 
